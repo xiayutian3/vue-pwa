@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <!-- 引入了应用程序清单文件 -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="./index.css">
+</head>
+<body>
+  <h1>hello pwa</h1>
+  <script>
+  window.addEventListener('load',async()=>{
+    if('serviceWorker' in navigator){
+      try{
+        const registration = await navigator.serviceWorker.register('./sw.js')
+        console.log('注册成功',registration)
+      }catch(e){
+        console.log('注册失败')
+      }
+    }
+  })
+  </script>
+</body>
+</html>
