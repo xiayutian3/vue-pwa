@@ -22,6 +22,28 @@
       }
     }
   })
+
+
+  /*
+    如果页面一进来，我们发下用户没有联网，给用户一个通知
+    先判断状态（默认，允许，拒绝），是默认才需要请求。拒绝的话，怎么请求都没有用
+  */
+ if(Notification.permission === 'default'){
+   //请求权限
+   Notification.requestPermission()
+ }
+ //判断有没有网络，没网的情况下
+ if(!navigator.onLine){
+   new Notification('提示',{body:'你当前没有网络，访问的是缓存'})
+ }
+
+
+ //有网络的情况（无网（断线）：offline）
+ window.addEventListener('online',()=>{
+   new Notification('提示',{
+     body:'已经连上网络，请刷新数据'
+   })
+ })
   </script>
 </body>
 </html>

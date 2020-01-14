@@ -40,6 +40,7 @@ await self.clients.claim()
 
 
   //表示service worker激活后，立即获取控制权(等到获取控制权后，再进行其他操作)
+  //例如：获得控制权后，在进行缓存操作
   // event.waitUntil(self.clients.claim())
 })
 
@@ -53,26 +54,50 @@ self.addEventListener('fetch', event=>{
 
   //请求对象
   const req = event.request
-  //给浏览器响应
-  event.respondWith(networkFirst(req))
+  //例如 http://localhost (只保留同源的资源，其他域名的资源，可能会出错，不保存)
+  const url = new URL(req.url)
+  if(url.origin !== self.origin){ // self.origin 、location.origin也可以
+    return
+  }
+  //给浏览器响应（判断是不是静态资源，是走缓存，不是就走线上资源）
+  //线上资源优先网络，静态资源优先缓存
+  if(req.url.includes('/api')){
+    event.respondWith(networkFirst(req))
+  }else{
+    event.respondWith(cacheFirst(req))
+  }
 
 })
 
 //网络请求优先
 async function networkFirst(req){
+  const cache = await caches.open(CACHE_NAME)
 try {
   //先从网络读取最新的资源
   const fresh = await fetch(req)
+  //网络优先，获取到的数据，应该再次更新到缓存中
+  //把响应的数据备份存储再缓存中(缓存了就没有返回了，所以备份一份做缓存用，另一份做返回用)
+  cache.put(req,fresh.clone())
   return fresh
 } catch (e) {
   //去读缓存
-  const cache = await caches.open(CACHE_NAME)
+  // const cache = await caches.open(CACHE_NAME)
   const cached = await cache.match(req)
   return cached
 }
 }
 
-//缓存优先
-function cacheFirst(req){
-
+//缓存优先，一般适用于静态资源
+async function cacheFirst(req){
+  const cache = await caches.open(CACHE_NAME)
+  const cached = await cache.match(req)
+//如果从缓存中拿到
+  if(cached){
+    return cached
+  }else{
+    const fresh = await fetch(req)
+    //把响应的数据备份存储再缓存中(缓存了就没有返回了，所以备份一份做缓存用，另一份做返回用)
+    cache.put(req,fresh.clone())
+    return fresh
+  }
 }
